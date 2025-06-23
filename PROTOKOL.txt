@@ -1,68 +1,89 @@
-FILE SERVER  
-TUJUAN: melayani client dalam request file server  
+FILE SERVER PROTOCOL
 
-ATURAN PROTOKOL:  
-- client harus mengirimkan request dalam bentuk string  
-- string harus dalam format  
-  REQUEST spasi PARAMETER  
-- PARAMETER dapat berkembang menjadi PARAMETER1 spasi PARAMETER2 dan seterusnya  
+TUJUAN
+File server ini bertugas untuk melayani permintaan dari client dalam bentuk operasi file tertentu seperti upload dan delete. Setiap perintah dikirim dalam bentuk string, diproses sesuai aturan protokol, dan server memberikan respons dalam format JSON.
 
-REQUEST YANG DILAYANI:  
-- informasi umum:  
-  * Jika request tidak dikenali akan menghasilkan pesan  
-    - status: ERROR  
-    - data: request tidak dikenali  
-  * Semua result akan diberikan dalam bentuk JSON dan diakhiri  
-    dengan character ascii code #13#10#13#10 atau "\r\n\r\n"  
+ATURAN UMUM PROTOKOL
 
-LIST  
-* TUJUAN: untuk mendapatkan daftar seluruh file yang dilayani oleh file server  
-* PARAMETER: tidak ada  
-* RESULT:  
-- BERHASIL:  
-  - status: OK  
-  - data: list file  
-- GAGAL:  
-  - status: ERROR  
-  - data: pesan kesalahan  
+- Setiap request dikirim oleh client dalam bentuk string teks.
+- Format umum perintah:
+  REQUEST PARAMETER
+- Beberapa perintah memiliki format khusus dengan multiple parameter atau format gabungan.
+- Setiap respons server akan diberikan dalam bentuk JSON, diakhiri dengan:
+  
 
-GET  
-* TUJUAN: untuk mendapatkan isi file dengan menyebutkan nama file dalam parameter  
-* PARAMETER:  
-  - PARAMETER1 : nama file  
-* RESULT:  
-- BERHASIL:  
-  - status: OK  
-  - data_namafile : nama file yang diminta  
-  - data_file : isi file yang diminta (dalam bentuk base64)  
-- GAGAL:  
-  - status: ERROR  
-  - data: pesan kesalahan  
+  (carriage return + line feed dua kali)
+  (ASCII: #13#10#13#10)
 
-UPLOAD  
-* TUJUAN: untuk mengirim file dari client ke server dengan isi file dalam format base64  
-* PARAMETER:  
-  - PARAMETER1 dan PARAMETER2 digabung dalam satu string dengan pemisah `||`  
-    - sebelum `||` adalah nama file tujuan penyimpanan di server  
-    - setelah `||` adalah isi file yang sudah di-encode dalam base64 (tanpa spasi)  
-* FORMAT:  
-  UPLOAD nama_file.ext||isi_file_base64\r\n\r\n  
-* RESULT:  
-- BERHASIL:  
-  - status: OK  
-  - data: pesan keberhasilan upload file  
-- GAGAL:  
-  - status: ERROR  
-  - data: pesan kesalahan (misal file tidak dapat disimpan)  
+- Jika request tidak dikenali, server akan mengembalikan:
+  {
+    "status": "ERROR",
+    "data": "request tidak dikenali"
+  }
 
-DELETE  
-* TUJUAN: untuk menghapus file di server dengan menyebutkan nama file dalam parameter  
-* PARAMETER:  
-  - PARAMETER1 : nama file yang akan dihapus  
-* RESULT:  
-- BERHASIL:  
-  - status: OK  
-  - data: pesan keberhasilan penghapusan file  
-- GAGAL:  
-  - status: ERROR  
-  - data: pesan kesalahan (misal file tidak ditemukan)  
+UPLOAD
+
+Tujuan:
+Mengirim file dari client ke server dengan isi file yang sudah di-encode dalam format base64.
+
+Format:
+UPLOAD <nama_file.ext>||<isi_file_base64>
+
+
+
+- Gunakan || sebagai pemisah antara nama file dan konten file yang di-encode base64.
+- File base64 tidak boleh mengandung spasi atau newline.
+
+Respons Berhasil:
+{
+  "status": "OK",
+  "data": "File <nama_file.ext> berhasil diupload"
+}
+
+Respons Gagal:
+{
+  "status": "ERROR",
+  "data": "Pesan kesalahan"
+}
+
+DELETE
+
+Tujuan:
+Menghapus file tertentu dari direktori penyimpanan server.
+
+Format:
+DELETE <nama_file.ext>
+
+
+
+- Hanya membutuhkan nama file sebagai parameter.
+
+Respons Berhasil:
+{
+  "status": "OK",
+  "data": "File <nama_file.ext> berhasil dihapus"
+}
+
+Respons Gagal:
+{
+  "status": "ERROR",
+  "data": "File tidak ditemukan" // atau pesan kesalahan lainnya
+}
+
+Contoh Perintah & Respons
+
+Perintah:
+UPLOAD gambar.png||iVBORw0KGgoAAAANSUhEUgAAA...==
+
+
+
+Respons:
+{"status": "OK", "data": "File gambar.png berhasil diupload"}
+
+Perintah:
+DELETE gambar.png
+
+
+
+Respons:
+{"status": "OK", "data": "File gambar.png berhasil dihapus"}
